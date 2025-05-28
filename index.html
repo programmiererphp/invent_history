@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geschichte Erfinden - Story Generator</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <!-- Font Awesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="header p-3 mb-4 text-center">
+            <h1 id="appTitle">Story Generator</h1>
+        </div>
+
+        <!-- Main Controls -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <button id="startGameBtn" class="btn btn-primary">
+                    <i class="fas fa-play btn-icon"></i>Start Game
+                </button>
+                <button id="restartGameBtn" class="btn btn-warning" disabled>
+                    <i class="fas fa-redo btn-icon"></i>Restart
+                </button>
+                <button id="stopGameBtn" class="btn btn-danger" disabled>
+                    <i class="fas fa-stop btn-icon"></i>End Game
+                </button>
+                <button id="settingsBtn" class="btn btn-secondary">
+                    <i class="fas fa-cog btn-icon"></i>Settings
+                </button>
+                <button id="showContribsBtn" class="btn btn-info">
+                    <i class="fas fa-list btn-icon"></i>Show Contributions
+                </button>
+            </div>
+        </div>
+        
+        <!-- Speech Configuration Status -->
+        <div class="row mb-3">
+            <div class="col-12 text-center">
+                <div class="badge bg-info text-wrap p-2" id="speechConfigStatus">
+                    <i class="fas fa-microphone me-1"></i> STT: Browser SpeechRecognition | 
+                    <i class="fas fa-volume-up me-1"></i> TTS: Browser SpeechSynthesis
+                </div>
+            </div>
+        </div>
+
+        <!-- Story Content -->
+        <div class="row">
+            <!-- User Input and AI Comment -->
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-header" id="lastUserInputTitle">Your Last Input</div>
+                    <div class="card-body">
+                        <div id="lastUserText" class="mb-3"></div>
+                        <div class="d-grid gap-2">
+                            <button id="startRecordBtn" class="btn btn-primary" disabled>
+                                <i class="fas fa-microphone btn-icon"></i><span id="startRecordBtnText">Start Recording</span>
+                            </button>
+                            <button id="stopRecordBtn" class="btn btn-danger" disabled>
+                                <i class="fas fa-stop btn-icon"></i><span id="stopRecordBtnText">Stop Recording</span>
+                            </button>
+                            
+                            <div class="text-center my-2">
+                                <span id="orText">или</span>
+                            </div>
+                            
+                            <div class="input-group mt-1">
+                                <input type="text" id="textInput" class="form-control" placeholder="Введите свой ответ..." disabled>
+                                <button id="submitTextBtn" class="btn btn-success" disabled>
+                                    <i class="fas fa-paper-plane btn-icon"></i><span id="submitTextBtnText">Отправить</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header" id="commentFeedbackTitle">AI Comment</div>
+                    <div class="card-body">
+                        <div id="ironicText"></div>
+                        <div class="mt-2">
+                            <button id="stopTTSBtn" class="btn btn-sm btn-outline-danger" disabled>
+                                <i class="fas fa-volume-mute btn-icon"></i><span id="stopTTSBtnText">Stop Speaking</span>
+                            </button>
+                            <span id="speakingIndicator" class="speaking-indicator">
+                                <i class="fas fa-volume-up"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Story and Hint -->
+            <div class="col-md-8">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <span id="currentStoryTitle">Current Story</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="storyText"></div>
+                    </div>
+                </div>
+
+                <!-- User input functionality has been removed -->
+                
+                <div class="card">
+                    <div class="card-header" id="hintTitle">Hint</div>
+                    <div class="card-body">
+                        <div id="hintText"></div>
+                        <div id="helpInfos" class="help-infos mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Log (hidden by default) -->
+        <div class="row mt-4 debug-section" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span id="debugLogTitle">Debug Log</span>
+                        <div>
+                            <button id="copyDebugBtn" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-copy btn-icon"></i>Copy
+                            </button>
+                            <button id="clearDebugBtn" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash btn-icon"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="debugLog" class="debug-log"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing Overlay -->
+    <div id="processingOverlay" class="processing-overlay">
+        <div>
+            <i class="fas fa-cog fa-spin fa-2x me-2"></i>
+            <span id="processingText">Processing...</span>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="settingsTitle">Settings</h5>
+                    <button type="button" class="btn-close" id="settingsClose" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>API Keys</h6>
+                            <div class="mb-3">
+                                <label for="apiKey" class="form-label" id="apiKeyLabel">OpenRouter API Key</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="apiKey" placeholder="Enter your API key">
+                                    <button class="btn btn-outline-secondary toggle-password" type="button" onclick="togglePasswordVisibility('apiKey')">
+                                        <i class="fa fa-eye"></i>
+                                    </button>
+                                </div>
+                                <small id="openRouterNote" class="form-text text-muted">Get your API key from openrouter.ai</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="modelSelect" class="form-label" id="modelSelectLabel">AI Model</label>
+                                <select class="form-select" id="modelSelect">
+                                    <option value="deepseek/deepseek-chat-v3-0324:free">DeepSeek Chat v3 (бесплатно)</option>
+                                    <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash (бесплатно)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="languageSelect" class="form-label" id="interfaceLanguageLabel">Interface Language</label>
+                                <select class="form-select" id="languageSelect">
+                                    <option value="en">English</option>
+                                    <option value="de">Deutsch</option>
+                                    <option value="ru">Русский</option>
+                                </select>
+                            </div>
+                            
+                            <h6 id="ttsSettingsTitle">Text-to-Speech Settings</h6>
+                            <div class="mb-3">
+                                <label for="ttsProvider" class="form-label" id="ttsProviderLabel">TTS Provider</label>
+                                <select class="form-select" id="ttsProvider">
+                                    <option value="browser">Browser (Built-in)</option>
+                                    <option value="elevenlabs">ElevenLabs</option>
+                                    <option value="google">Google Cloud TTS</option>
+                                </select>
+                            </div>
+                            
+                            <div id="elevenLabsSettings" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="elevenLabsKey" class="form-label">ElevenLabs API Key</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="elevenLabsKey">
+                                        <button class="btn btn-outline-secondary toggle-password" type="button" onclick="togglePasswordVisibility('elevenLabsKey')">
+                                            <i class="fa fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="elevenLabsVoice" class="form-label">Voice ID</label>
+                                    <input type="text" class="form-control" id="elevenLabsVoice" placeholder="Optional - defaults to Rachel">
+                                </div>
+                            </div>
+                            
+                            <div id="googleTTSSettings" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="googleApiKey" class="form-label">Google API Key</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="googleApiKey">
+                                        <button class="btn btn-outline-secondary toggle-password" type="button" onclick="togglePasswordVisibility('googleApiKey')">
+                                            <i class="fa fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="googleVoiceName" class="form-label">Voice Name</label>
+                                    <input type="text" class="form-control" id="googleVoiceName" placeholder="Optional">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 id="storyGenSettingsTitle">Story Generation Settings</h6>
+                            <div class="mb-3">
+                                <label for="initialPrompt" class="form-label" id="initialPromptLabel">Initial Prompt</label>
+                                <textarea class="form-control" id="initialPrompt" rows="4"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="reactionPrompt" class="form-label" id="reactionPromptLabel">Reaction Prompt</label>
+                                <textarea class="form-control" id="reactionPrompt" rows="4"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="themeSelect" class="form-label" id="themeLabel">Theme</label>
+                                <select class="form-select" id="themeSelect">
+                                    <option value="standard">Standard</option>
+                                    <option value="fantasy">Fantasy</option>
+                                    <option value="scifi">Science Fiction</option>
+                                    <option value="mystery">Mystery</option>
+                                    <option value="romance">Romance</option>
+                                    <option value="horror">Horror</option>
+                                    <option value="german-a2">German (A2 Level)</option>
+                                </select>
+                            </div>
+                            
+                            <h6 id="otherSettingsTitle">Other Settings</h6>
+                            <div class="mb-3">
+                                <label for="autoStartTime" class="form-label" id="autoStartTimeLabel">Auto-start Time (HH:MM)</label>
+                                <input type="time" class="form-control" id="autoStartTime" value="08:00">
+                            </div>
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" id="useBrowserSTT" name="useBrowserSTT" checked>
+                                <label class="form-check-label" for="useBrowserSTT" id="useBrowserSttText">Use Browser Speech Recognition</label>
+                            </div>
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" id="showHelpInfos" name="showHelpInfos">
+                                <label class="form-check-label" for="showHelpInfos" id="showDebugInfoText">Show Debug Info</label>
+                            </div>
+                            
+                            <div class="debug-controls mt-3" style="display: none;">
+                                <button type="button" class="btn btn-sm btn-secondary me-2" id="copyDebug">Copy Debug Log</button>
+                                <button type="button" class="btn btn-sm btn-danger" id="clearDebug">Clear Debug Log</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="saveSettingsBtn">
+                        <i class="fas fa-save me-1"></i><span id="saveSettingsBtnText">Сохранить настройки</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contributions Modal -->
+    <div class="modal fade" id="contributionsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="allContributionsTitle">All Your Contributions</h5>
+                    <button type="button" class="btn-close" id="contribsClose" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="contributionsList" class="contribution-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Глобальный объект для хранения состояния -->
+    <script>
+        // Инициализация глобальных объектов для обмена данными между модулями
+        window.App = window.App || {};
+        window.UI = window.UI || {};
+        window.API = window.API || {};
+        window.Speech = window.Speech || {};
+        window.DOM = {}; // Глобальный объект для хранения DOM-элементов
+        
+        // Базовые настройки
+        window.App.gameActive = false;
+        window.App.isProcessing = false;
+        window.App.isSpeaking = false;
+        window.App.isRecording = false;
+        window.App.currentLanguage = localStorage.getItem("interface_language") || "en";
+        window.App.currentTheme = localStorage.getItem("theme") || 'standard';
+        window.App.helpInfosVisible = localStorage.getItem("show_help_infos") === "true";
+        window.App.ttsProvider = localStorage.getItem("tts_provider") || "browser";
+    </script>
+    
+    <!-- Application JS Modules (в правильном порядке) -->
+    <script src="js/api.js"></script>
+    <script src="js/speech.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/apifix.js"></script>
+    <!-- Инициализатор приложения -->
+    <script>
+        // Запускаем инициализацию только после полной загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // Проверяем, что все модули загружены
+                if (window.App && window.API && window.Speech && 
+                    window.UI && window.Speech.initSpeechRecognition) {
+                        
+                    // Инициализируем основные компоненты приложения ВНАЧАЛЕ
+                    if (window.initializeApp) {
+                        window.initializeApp();
+                        console.log('Application core successfully initialized!');
+                    } else {
+                        console.warn('initializeApp function not found. Some features might not work properly.');
+                        // Consider stopping further initialization if app core fails
+                    }
+
+                    // Затем инициализируем UI, который может зависеть от App
+                    window.UI.initializeUI();
+                    console.log('UI successfully initialized!');
+                    
+                } else {
+                    console.error('Failed to initialize app - some core modules are missing!');
+                }
+            } catch (error) {
+                console.error('Error during initialization:', error);
+            }
+        });
+    </script>
+</body>
+</html>
