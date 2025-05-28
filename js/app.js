@@ -395,12 +395,32 @@ async function startGame() {
         fullStory = botData.integratedStory || botData.story;
         // Очищаем текст истории от служебных сообщений и JSON-разметки
         fullStory = cleanStoryText(fullStory);
+
+        // Extract first 1-2 sentences for display
+        let displayedStory = "";
+        if (fullStory) {
+            const sentences = fullStory.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+            if (sentences.length > 0) {
+                displayedStory = sentences[0].trim();
+                if (sentences.length > 1) {
+                    displayedStory += (/[.!?]$/.test(displayedStory) ? "" : ".") + " " + sentences[1].trim();
+                }
+                // Ensure the displayed story ends with a punctuation mark if the original fullStory did.
+                const lastCharFullStory = fullStory.trim().slice(-1);
+                if (/[.!?]/.test(lastCharFullStory) && !/[.!?]$/.test(displayedStory)) {
+                    displayedStory += lastCharFullStory;
+                }
+            } else {
+                displayedStory = fullStory; // Fallback if splitting results in empty array
+            }
+        }
+
         // Извлекаем объект подсказки из JSON или используем имеющийся объект
         currentHint = extractHint(botData.hint || fullStory);
         lastComment = botData.comment;
         
         // Обновление UI элементов с проверкой на существование
-        if (DOM.storyTextDiv) DOM.storyTextDiv.textContent = fullStory;
+        if (DOM.storyTextDiv) DOM.storyTextDiv.textContent = displayedStory;
         else console.warn('storyTextDiv not found, unable to update content');
         
         if (DOM.ironicTextDiv) DOM.ironicTextDiv.textContent = lastComment;
